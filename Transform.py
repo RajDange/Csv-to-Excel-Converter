@@ -4,7 +4,7 @@ from io import BytesIO
 import os
 import zipfile
 import concurrent.futures
-
+# parallel
 # Function to process and convert a single CSV file to XLSX
 def process_file(uploaded_file, delimiter, custom_xlsx_names, adjust_column_width, zipf):
     try:
