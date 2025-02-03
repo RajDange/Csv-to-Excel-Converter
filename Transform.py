@@ -4,13 +4,9 @@ from io import BytesIO
 import os
 import zipfile
 import concurrent.futures
-import warnings
-
-# Suppress Streamlit's warning related to threading
-warnings.filterwarnings("ignore", message="missing ScriptRunContext!")
 
 # Function to process and convert a single CSV file to XLSX
-def process_file(uploaded_file, delimiter, custom_xlsx_names, adjust_column_width, zipf, progress_callback):
+def process_file(uploaded_file, delimiter, custom_xlsx_names, adjust_column_width, zipf):
     try:
         # Read the CSV file into a DataFrame using the selected delimiter
         df = pd.read_csv(uploaded_file, delimiter=delimiter, low_memory=False)
@@ -64,9 +60,6 @@ def process_file(uploaded_file, delimiter, custom_xlsx_names, adjust_column_widt
         # Add the XLSX file to the ZIP archive
         zipf.writestr(xlsx_filename, output.read())
 
-        # Call the progress callback function to update progress
-        progress_callback()
-
     except Exception as e:
         return f"Error processing file {uploaded_file.name}: {e}"
 
@@ -95,9 +88,6 @@ def convert_multiple_csv_to_xlsx():
         # Ask if the user wants to adjust column width (only for smaller files)
         adjust_column_width = st.checkbox("Adjust column width to fit content")
 
-        # Progress bar for tracking file conversion progress
-        progress_bar = st.progress(0)
-
         # Start button to trigger conversion
         start_button = st.button("Start Conversion")
 
@@ -108,20 +98,10 @@ def convert_multiple_csv_to_xlsx():
 
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # Use ThreadPoolExecutor to process multiple files concurrently
-                total_files = len(uploaded_files)
-                completed_files = 0
-
-                # Update progress callback
-                def update_progress():
-                    nonlocal completed_files
-                    completed_files += 1
-                    progress = int((completed_files / total_files) * 100)
-                    progress_bar.progress(progress)
-
                 with concurrent.futures.ThreadPoolExecutor() as executor:
                     futures = []
                     for uploaded_file in uploaded_files:
-                        futures.append(executor.submit(process_file, uploaded_file, delimiter, custom_xlsx_names, adjust_column_width, zipf, update_progress))
+                        futures.append(executor.submit(process_file, uploaded_file, delimiter, custom_xlsx_names, adjust_column_width, zipf))
 
                     # Wait for all futures to complete and check for any errors
                     for future in concurrent.futures.as_completed(futures):
