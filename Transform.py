@@ -4,6 +4,7 @@ from io import BytesIO
 import os
 import zipfile
 import time
+from Mainconversion import preview_csv
 # sequential
 # Function to process and convert a single CSV file to XLSX
 def process_file(uploaded_file, delimiter, custom_xlsx_names, adjust_column_width, zipf, progress_callback):
@@ -69,9 +70,10 @@ def process_file(uploaded_file, delimiter, custom_xlsx_names, adjust_column_widt
 # Streamlit app
 def convert_multiple_csv_to_xlsx():
     st.title("Multiple CSV to XLSX Converter")
+    st.sidebar.title("Configurations")
 
     # Ask for the delimiter option first
-    delimiter = st.selectbox(
+    delimiter = st.sidebar.selectbox(
         "Select the delimiter for your CSV files",
         options=[",", ";", "\t", "|"],
         index=0,  # Default to comma
@@ -79,23 +81,23 @@ def convert_multiple_csv_to_xlsx():
     )
 
     # Upload multiple CSV files
-    uploaded_files = st.file_uploader("Choose CSV files", type=["csv"], accept_multiple_files=True)
+    uploaded_files = st.sidebar.file_uploader("Choose CSV files", type=["csv"], accept_multiple_files=True)
 
     if uploaded_files:
         # Ask for the base name for the output ZIP file
-        zip_name = st.text_input("Enter a name for the output ZIP file (without extension):", "converted_files")
+        zip_name = st.sidebar.text_input("Enter a name for the output ZIP file (without extension):", "converted_files")
 
         # Ask if the user wants to specify a custom name for each XLSX file
-        custom_xlsx_names = st.checkbox("Specify custom names for the XLSX files inside the ZIP")
+        custom_xlsx_names = st.sidebar.checkbox("Specify custom names for the XLSX files inside the ZIP")
 
         # Ask if the user wants to adjust column width (only for smaller files)
-        adjust_column_width = st.checkbox("Adjust column width to fit content")
+        adjust_column_width = st.sidebar.checkbox("Adjust column width to fit content")
 
         # Placeholder for the progress bar
         progress_placeholder = st.empty()
 
         # Start button to trigger conversion
-        start_button = st.button("Start Conversion")
+        start_button = st.sidebar.button("Start Conversion")
 
         # If Start Conversion button is clicked
         if start_button:
@@ -130,7 +132,11 @@ def convert_multiple_csv_to_xlsx():
                 file_name=zip_filename,
                 mime="application/zip"
             )
-
+            
+    for uploaded_file in uploaded_files:
+        st.subheader(f"Preview of {uploaded_file.name}")
+        preview_csv(uploaded_file, delimiter)
+        
 # Run the app
 if __name__ == "__main__":
     convert_multiple_csv_to_xlsx()
